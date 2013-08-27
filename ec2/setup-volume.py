@@ -7,31 +7,29 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser()
-    # Optional
+
     parser.add_argument("--verbose", help="maximum verbosity",
                        action="store_true")
-    parser.add_argument("--snapshot", "-t", type=int, metavar="SOCKET_TIMEOUT", default=10,
-                       help="set timeout for network connection")
-    parser.add_argument("--snapshot-description", "-t", type=int, metavar="SOCKET_TIMEOUT", default=10,
-                       help="set timeout for network connection")
-    parser.add_argument("--snapshot-description", "-t", type=int, metavar="SOCKET_TIMEOUT", default=10,
-                       help="set timeout for network connection")
-    parser.add_argument("--snapshot-description", "-t", type=int, metavar="SOCKET_TIMEOUT", default=10,
-                       help="set timeout for network connection")
-    parser.add_argument("--snapshot-description", "-t", type=int, metavar="SOCKET_TIMEOUT", default=10,
-                       help="set timeout for network connection")
-    parser.add_argument("--snapshot-description", "-t", type=int, metavar="SOCKET_TIMEOUT", default=10,
-                       help="set timeout for network connection")
+    parser.add_argument("--snapshot", "-S", metavar="SNAPSHOT_ID",
+                       help="Snapshot ID to use for volume")
+    parser.add_argument("--snapshot-description", "-t", type=int, metavar="SNAPSHOT_DESCRIPTION",
+                       help="Most recent snapshot descriptsion to use for volume.")
+    parser.add_argument("--delete-on-shutdown", "-z", type=bool, metavar="DELETE_ON_SHUTDOWN",
+                       default=False, action="store_true",
+                       help="delete on instance shutdown")
+    parser.add_argument("--provisioned-iops", "-p", type=int, metavar="PROVISIONED_IOPS",
+                       help="Provisioned IOPS to setup volume with")
+    parser.add_argument("--device", "-d", metavar="DEVICE", default="/dev/sdh",
+                       help="Device to attach volume")
+    parser.add_argument("--mount-point", "-m", metavar="MOUNT_POINT", default="/mnt/data",
+                       help="Mount point for volume")
     parser.add_argument("--size", "-s", type=int, metavar="VOLUME_SIZE", default=10,
                        help="Size for the volume")
+    parser.add_argument("--instance", "-i", metavar="INSTANCE_ID",
+                       help="Instance to attach to, default to the instance where we are running script on")
     parser.add_argument("--loglevel", type=str, choices=['DEBUG','INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                        default='INFO',
                        help="set output verbosity level")
-    # This one is required even if is an option. Please avoid such usage.
-    parser.add_argument("--run", help="actually run the script, safe check", required=True)
-
-    # This one is required positional argument when calling program
-    parser.add_argument("importfile", type=file)
 
     args = parser.parse_args()
 
