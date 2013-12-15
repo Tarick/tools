@@ -52,7 +52,7 @@ def main():
         loglevel = "logging.DEBUG"
 
     logging.basicConfig(format='%(asctime)s %(name)s %(levelname)s: %(message)s', level=loglevel)
-    # Output will be like: "13-05-12 13:00:09,934 root WARNING: some warning text"
+    # Output will be like: "2013-05-12 13:00:09,934 root WARNING: some warning text"
     logging.debug("====================================================")
     logging.debug("Program started")
 
