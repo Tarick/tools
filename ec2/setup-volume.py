@@ -7,6 +7,7 @@ import boto.ec2
 from boto.utils import get_instance_metadata
 import logging
 import argparse
+import time
 
 if sys.version_info < (2, 6):
     if __name__ == "__main__":
@@ -17,7 +18,7 @@ if sys.version_info < (2, 6):
 
 class CreateAndMountEBSVolume(object):
 
-    '''Create and mount ebs volume, either from snapshot or completely new.
+    '''Create and mount ebs volume on EC2 instance, either from snapshot or completely new.
     In later case - format it to needed FS.
 
     '''
@@ -42,7 +43,7 @@ class CreateAndMountEBSVolume(object):
                                   mount_dir)
                     return False
             else:
-                # otherwise this is empty directory, we'll use it
+                # this is empty directory, we'll use it
                 return True
         else:
             # Create directory recursively
@@ -57,27 +58,68 @@ class CreateAndMountEBSVolume(object):
             return True
 
     def check_device(self, device_name):
-        '''Check if block defice is free'''
-        pass
+        '''Check if block defice is present'''
+        if os.path.exists(device_name):
+            logging.debug("%s is present", device_name)
+            return True
+        else:
+            logging.debug("%s is not present", device_name)
+            return False
 
     def get_snapshot(self, snapshot_description):
-        '''Get snapshot ID from the descriptino'''
-        pass
+        '''Get snapshot from the description
+        In case there are many snapshots - take the last created'''
+        snapshot_list = conn.get_all_snapshots(owner="self",
+                                          filters={"description": snapshot_description,
+                                                   "status": "completed"})
+        if snapshot_list:
+            snapshot = sorted(snaplist, key=lambda snapshot: snapshot.start_time)[-1]
+            return snapshot
+        else:
+            return None
 
-    def create_volume_from_snapshot(self, snapshot_id, size=None,
-                                    provisioned_iops=None):
-        pass
+    def create_volume_from_snapshot(self, snapshot,
+                                    size=None,
+                                    provisioned_iops=None,
+                                    ):
+        '''Create volume from provided snapshot object'''
+        if provisioned_iops:
+            volume_type = io1
+        else:
+            volume_type = None
+        volume = snapshot.create_volume(availability_zone,
+                                        size=size,
+                                        iops=provisioned_iops,
+                                        volume_type=volume_type)
+        return volume
 
     def create_new_volume(self, size, provisioned_iops=None):
-        pass
+        '''Create new volume'''
+        if provisioned_iops:
+            volume_type = io1
+        else:
+            volume_type = None
+        volume = conn.create_volume(availability_zone,
+                                        size=size,
+                                        iops=provisioned_iops,
+                                        volume_type=volume_type)
+        return volume
 
-    def attach_volume(self, device_name, instance_id,
+    def attach_volume(self, volume, device, instance_id,
                       delete_on_shutdown=False):
-        pass
-
-    def check_volume(self, volume_id):
-        '''Check if the volume is attached'''
-        pass
+        '''Attaches the volume to the instance'''
+        while volume.status != 'available':
+            logging.debug("%s is not yet created and available", volume)
+            volume.update()
+            time.sleep(3)
+        volume.attach(instance_id, device)
+        if delete_on_shutdown:
+            while volume.status != 'in-use':
+                logging.debug("%s is not yet attached", volume)
+                volume.update()
+                time.sleep(3)
+            conn.modify_instance_attribute(instance_id,
+                                           'blockDeviceMapping', {device: True})
 
     def format_volume(self, device_name, format_parameters):
         pass
@@ -111,7 +153,7 @@ def main():
                         help="Volume size, by default 10G if created from scratch")
     parser.add_argument("--verbose", help="maximum verbosity",
                         action="store_true")
-    parser.add_argument("--loglevel", type=str, choices=['DEBUG','INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+    parser.add_argument("--loglevel", type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                         default='INFO',
                         help="set output verbosity level")
 
