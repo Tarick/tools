@@ -8,6 +8,7 @@ from boto.utils import get_instance_metadata
 import logging
 import argparse
 import time
+import subprocess
 
 if sys.version_info < (2, 6):
     if __name__ == "__main__":
@@ -57,20 +58,20 @@ class CreateAndMountEBSVolume(object):
             logging.debug("%s created", mount_dir)
             return True
 
-    def check_device(self, device_name):
+    def check_device(self, device):
         '''Check if block defice is present'''
-        if os.path.exists(device_name):
-            logging.debug("%s is present", device_name)
+        if os.path.exists(device):
+            logging.debug("%s is present", device)
             return True
         else:
-            logging.debug("%s is not present", device_name)
+            logging.debug("%s is not present", device)
             return False
 
     def get_snapshot(self, snapshot_description):
         '''Get snapshot from the description
         In case there are many snapshots - take the last created'''
         snapshot_list = conn.get_all_snapshots(owner="self",
-                                          filters={"description": snapshot_description,
+                                               filters={"description": snapshot_description,
                                                    "status": "completed"})
         if snapshot_list:
             snapshot = sorted(snaplist, key=lambda snapshot: snapshot.start_time)[-1]
@@ -121,11 +122,15 @@ class CreateAndMountEBSVolume(object):
             conn.modify_instance_attribute(instance_id,
                                            'blockDeviceMapping', {device: True})
 
-    def format_volume(self, device_name, format_parameters):
-        pass
+    def format_volume(self, device, fs="xfs", format_options=None):
+        '''Unconditionally formats the volume'''
+        logging.debug("Formatting volume with mkfs.%s", fs)
+        subprocess.check_call(["mkfs." + fs, format_options, device])
 
-    def mount_volume(self, mount_dir):
-        pass
+    def mount_volume(self, device, mount_options, mount_dir):
+        '''Mounts volume, cap'''
+        logging.debug("Mounting volume")
+        subprocess.check_call(["mount", mount_options, device, mount_dir])
 
 
 def main():
@@ -175,7 +180,7 @@ def main():
     #   * .boto or /etc/boto.cfg config files
     #   * AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environmental variables
     # to automatically provide credentials to boto.
-    # In case you need pass those via the file - uncomment the code below
+    # In case you need to pass those via the file - uncomment the code below
 
     #try:
     #    # The awsauth.py file should have AWS_ACCESS_KEY_ID
