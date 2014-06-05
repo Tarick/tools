@@ -145,12 +145,10 @@ def main():
     logging.debug("Used snapshot retention period: %s" % args.retention)
     logging.debug("Used snapshot description: %s" % args.snapshot_description)
 
-    # Provides AWS_ID and AWS_SECRET for Boto connection
-    # NOTE: we rely on:
+    # NOTE: for EC2 connection we rely on the presence of:
     #   * ~/.boto or /etc/boto.cfg config files or
     #   * AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environmental variables
     #   * or IAM instance profile
-    # to automatically provide credentials to boto.
     try:
         conn = boto.ec2.connect_to_region(get_instance_metadata()
                                           ["placement"]
