@@ -20,7 +20,7 @@ def main():
     # Parse all arguments
     parser = argparse.ArgumentParser(description="Make ssh connection"
                                      "to the internal ip address of the instance"
-                                     "based on provided Environment and Role tags")
+                                     "based on provided Name or Environment and Role tags")
     parser.add_argument("tags",
                         nargs='*',
                         default=None,
@@ -31,15 +31,27 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    env, role = args.tags
     con = boto.connect_ec2()
-    instances = con.get_only_instances(filters={'instance-state-name': 'running', 'tag:Environment': env})
     matched_instances = []
-    for instance in instances:
-        if "Role" not in instance.tags.keys():
-            continue
-        if role in instance.tags.get("Role"):
-            matched_instances.append(instance)
+    # Processing depends on whether we supply one tag (use for Name) or two
+    # (use for Env and Role tags)
+    if len(sys.argv) == 2:
+        instances = con.get_only_instances(filters={'instance-state-name': 'running'})
+        name = args.tags[0]
+        for instance in instances:
+            if "Name" not in instance.tags.keys():
+                continue
+            if name in instance.tags.get("Name"):
+                matched_instances.append(instance)
+    else:
+        env, role = args.tags
+        instances = con.get_only_instances(filters={'instance-state-name': 'running',
+                                           'tag:Environment': env})
+        for instance in instances:
+            if "Role" not in instance.tags.keys():
+                continue
+            if role in instance.tags.get("Role"):
+                matched_instances.append(instance)
 
     if not matched_instances:
         print("No instances found")
