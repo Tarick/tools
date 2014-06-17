@@ -11,7 +11,8 @@ if sys.version_info < (2, 6):
     else:
         raise Exception("we need python >= 2.6")
 
-username = "ubuntu"
+username1 = "ubuntu"
+username2 = "ec2-user"
 
 
 def main():
@@ -35,6 +36,8 @@ def main():
     instances = con.get_only_instances(filters={'instance-state-name': 'running', 'tag:Environment': env})
     matched_instances = []
     for instance in instances:
+        if "Role" not in instance.tags.keys():
+            continue
         if role in instance.tags.get("Role"):
             matched_instances.append(instance)
 
@@ -55,14 +58,18 @@ def main():
         while True:
             choice = input("Enter number: ")
             if choice > len(matched_instances):
-                print("Incorrect choice, do again")
+                print("WARN: Incorrect choice, do again")
             else:
                 break
         connect_instance = matched_instances[choice - 1]
 
     ip_address = connect_instance.private_ip_address
     print("Connecting to %s address %s") % (connect_instance.tags.get("Name"), ip_address)
-    subprocess.call("ssh " + "@".join([username, ip_address]), shell=True)
+    try:
+        subprocess.check_call("ssh " + "@".join([username1, ip_address]), shell=True)
+    except:
+        print("ERROR: failure running with %s user, trying %s") % (username1, username2)
+        subprocess.check_call("ssh " + "@".join([username2, ip_address]), shell=True)
 
 if __name__ == '__main__':
     main()
