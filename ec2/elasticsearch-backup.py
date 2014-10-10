@@ -199,7 +199,7 @@ def restore_snapshot(args):
 
     # Restore
     try:
-	logging.info("Starting restore of snapshot data from repo."
+        logging.info("Starting restore of snapshot data from repo."
                       "Note: this is the long process, the script will exit once it finished")
         restore_snapshot = requests.post(restore_url)
         restore_snapshot.raise_for_status()
@@ -274,8 +274,7 @@ def cleanup_snapshots(args):
     return("Deleted stale snapshots: %s" % ([snapshot['snapshot']
                                             for snapshot in stale_snapshots]))
 
-
-def main():
+def argument_parser():
     # Parse all arguments
     epilog = "EXAMPLE: %(prog)s create_snapshot --repository elasticsearch-dev"
     description = "Manage backup of ES cluster indices to S3 and restore"
@@ -393,6 +392,11 @@ def main():
 
     # Parse all arguments
     args = parser.parse_args()
+    return args
+    
+
+def main():
+    args = argument_parser()
     logging.basicConfig(format='%(asctime)s %(name)s %(levelname)s: %(message)s',
                         level=getattr(logging, args.loglevel.upper(), None))
 
