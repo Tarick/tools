@@ -86,7 +86,8 @@ def create_repository(args):
         logging.exception("Failure creating repository")
         raise
 
-    return("Created or updated repository: %s" % args.repository)
+    repository_ = ("Created or updated repository: %s" % args.repository)
+    return repository_
 
 
 def delete_repository(args):
@@ -107,16 +108,13 @@ def delete_repository(args):
 
 def list_snapshots(args):
     '''Wrapper for list ES snapshot function to handle args passing'''
-    try:
-        snapshots = list_es_snapshots(args.repository)
-        # Pretty print
-        if snapshots:
-            snapshots_info = json.dumps(snapshots,
-                                        sort_keys=True,
-                                        indent=4,
-                                        separators=(',', ': '))
-    except:
-        raise
+    snapshots = list_es_snapshots(args.repository)
+    # Pretty print
+    if snapshots:
+        snapshots_info = json.dumps(snapshots,
+                                    sort_keys=True,
+                                    indent=4,
+                                    separators=(',', ': '))
     return(snapshots_info)
 
 
@@ -218,10 +216,7 @@ def delete_snapshot(args):
             logging.warn("Our instance isn't suitable"
                          "to make snapshots in the cluster")
             return False
-    try:
-        return(delete_es_snapshot(args.repository, args.snapshot_name))
-    except:
-        raise
+    return delete_es_snapshot(args.repository, args.snapshot_name)
 
 
 def delete_es_snapshot(repository, snapshot_name):
@@ -393,7 +388,7 @@ def argument_parser():
     # Parse all arguments
     args = parser.parse_args()
     return args
-    
+
 
 def main():
     args = argument_parser()

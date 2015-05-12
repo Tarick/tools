@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from collections import namedtuple
 
 import sys
 import boto
@@ -11,9 +12,6 @@ if sys.version_info < (2, 6):
     else:
         raise Exception("we need python >= 2.6")
 
-username1 = "ubuntu"
-username2 = "ec2-user"
-
 
 def main():
 
@@ -25,6 +23,10 @@ def main():
                         nargs='*',
                         default=None,
                         help="Tag of environment and role to connect to, e.g. dev dbmst")
+    parser.add_argument("--username", "-u",
+                        type=str,
+                        required=True,
+                        help="Username to connect with")
     args = parser.parse_args()
     # Print help on missing arguments
     if len(sys.argv) == 0:
@@ -35,7 +37,7 @@ def main():
     matched_instances = []
     # Processing depends on whether we supply one tag (use for Name) or two
     # (use for Env and Role tags)
-    if len(sys.argv) == 2:
+    if len(args.tags) == 1:
         instances = con.get_only_instances(filters={'instance-state-name': 'running'})
         name = args.tags[0]
         for instance in instances:
@@ -64,11 +66,12 @@ def main():
         number = 0
         for instance in matched_instances:
             number += 1
-            print("%d) %s: Name: %s, Roles: %s") % (number, instance.id,
-                                                    instance.tags.get("Name"),
-                                                    instance.tags.get("Role"))
+            tags = instance.tags
+            print ("{choice:>3}) {i.id:<12} {i.private_ip_address:<15} "
+                   "{name:<20} {role:<20}").format(
+                choice=number, i=instance, name=tags['Name'], role=tags['Role'])
         while True:
-            choice = input("Enter number: ")
+            choice = int(input("Enter number: "))
             if choice > len(matched_instances):
                 print("WARN: Incorrect choice, do again")
             else:
@@ -76,12 +79,12 @@ def main():
         connect_instance = matched_instances[choice - 1]
 
     ip_address = connect_instance.private_ip_address
-    print("Connecting to %s address %s") % (connect_instance.tags.get("Name"), ip_address)
+    print("Connecting to %s address %s" % (connect_instance.tags.get("Name"), ip_address))
     try:
-        subprocess.check_call("ssh " + "@".join([username1, ip_address]), shell=True)
+        subprocess.check_call("ssh " + "@".join([args.username, ip_address]), shell=True)
     except:
-        print("ERROR: failure running with %s user, trying %s") % (username1, username2)
-        subprocess.check_call("ssh " + "@".join([username2, ip_address]), shell=True)
+        print("ERROR: failure running with %s user") % (args.username)
+        raise
 
 if __name__ == '__main__':
     main()
