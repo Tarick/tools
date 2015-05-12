@@ -103,7 +103,7 @@ def delete_repository(args):
         logging.exception("Failure deleting repository")
         raise
 
-    return("Deleted repository: %s" % args.repository)
+    return "Deleted repository: %s" % args.repository
 
 
 def list_snapshots(args):
@@ -115,7 +115,7 @@ def list_snapshots(args):
                                     sort_keys=True,
                                     indent=4,
                                     separators=(',', ': '))
-    return(snapshots_info)
+    return snapshots_info
 
 
 def list_es_snapshots(repository):
@@ -131,7 +131,7 @@ def list_es_snapshots(repository):
         logging.exception("Failure getting ES status information through API")
         raise
     if snapshots_list:
-        return(snapshots_list.json()['snapshots'])
+        return snapshots_list.json()['snapshots']
 
 
 def list_repositories(args):
@@ -153,7 +153,7 @@ def list_repositories(args):
                                        separators=(',', ': '))
     else:
         repositories_list = False
-    return (repositories_list)
+    return repositories_list
 
 
 def create_snapshot(args):
@@ -182,7 +182,8 @@ def create_snapshot(args):
     except:
         logging.exception("Failure triggering snapshot through API")
         raise
-    return('Triggered snapshot with name: %s' % (snapshot_name))
+    return 'Triggered snapshot with name: %s' % (snapshot_name)
+
 
 def restore_snapshot(args):
     '''Trigger snapshot restore to ES. Note - existing index should be closed before'''
@@ -193,18 +194,18 @@ def restore_snapshot(args):
                          "to make snapshots in the cluster")
             return False
     restore_url = "/".join([ES_LOCAL_URL, '_snapshot', args.repository,
-                             args.snapshot_name, '_restore']) + '?wait_for_completion=true'
+                            args.snapshot_name, '_restore']) + '?wait_for_completion=true'
 
     # Restore
     try:
         logging.info("Starting restore of snapshot data from repo."
-                      "Note: this is the long process, the script will exit once it finished")
+                     "Note: this is the long process, the script will exit once it finished")
         restore_snapshot = requests.post(restore_url)
         restore_snapshot.raise_for_status()
     except:
         logging.exception("Failure triggering snapshot restore through API")
         raise
-    return('Finished snapshot restore with name: %s' % (args.snapshot_name))
+    return 'Finished snapshot restore with name: %s' % (args.snapshot_name)
 
 
 def delete_snapshot(args):
@@ -230,7 +231,7 @@ def delete_es_snapshot(repository, snapshot_name):
     except:
         logging.exception("Failure deleting snapshot through API")
         raise
-    return('Deleted snapshot with name: %s' % (snapshot_name))
+    return 'Deleted snapshot with name: %s' % (snapshot_name)
 
 
 def cleanup_snapshots(args):
@@ -266,8 +267,9 @@ def cleanup_snapshots(args):
     else:
         stale_snapshots = None
 
-    return("Deleted stale snapshots: %s" % ([snapshot['snapshot']
-                                            for snapshot in stale_snapshots]))
+    return "Deleted stale snapshots: %s" % ([snapshot['snapshot']
+                                            for snapshot in stale_snapshots])
+
 
 def argument_parser():
     # Parse all arguments
@@ -294,19 +296,19 @@ def argument_parser():
     parser_create_snapshot.set_defaults(script_action=create_snapshot)
 
     parser_restore_snapshot = subparsers.add_parser('restore_snapshot',
-                                                   help='Restore index to instance/cluster from repository snapshot in S3')
+                                                    help='Restore index to instance/cluster from repository snapshot in S3')
     parser_restore_snapshot.add_argument("--repository", "-r",
-                                        type=str,
-                                        required=True,
-                                        help="Registered in ES cluster repository for snapshots")
+                                         type=str,
+                                         required=True,
+                                         help="Registered in ES cluster repository for snapshots")
     parser_restore_snapshot.add_argument("--snapshot-name", "-s",
-                                        type=str,
-                                        required=True,
-                                        help="Snapshot name to restore")
+                                         type=str,
+                                         required=True,
+                                         help="Snapshot name to restore")
     parser_restore_snapshot.add_argument("--check-leadership",
-                                        action='store_true',
-                                        required=False,
-                                        help="Checks if we're allowed to do the job with multiple nodes available")
+                                         action='store_true',
+                                         required=False,
+                                         help="Checks if we're allowed to do the job with multiple nodes available")
     parser_restore_snapshot.set_defaults(script_action=restore_snapshot)
 
     parser_list_repositories = subparsers.add_parser('list_repositories',
